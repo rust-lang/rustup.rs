@@ -1774,6 +1774,7 @@ dependencies = [
  "error-chain",
  "flate2",
  "git-testament",
+ "glob",
  "home",
  "lazy_static",
  "libc",

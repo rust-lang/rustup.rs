@@ -1,11 +1,13 @@
 use std::borrow::Cow;
 use std::fmt::{self, Display};
 use std::io;
+use std::iter;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::str::FromStr;
 use std::sync::Arc;
 
+use glob::Pattern;
 use pgp::{Deserializable, SignedPublicKey};
 use serde::Deserialize;
 
@@ -406,6 +408,16 @@ impl Cfg {
         Toolchain::from(self, name)
     }
 
+    pub fn get_toolchains_from_glob(
+        &self,
+        pattern: Pattern,
+    ) -> Result<impl Iterator<Item = Toolchain<'_>>> {
+        Ok(self
+            .list_toolchains_iter()?
+            .filter(move |toolchain| pattern.matches(toolchain))
+            .map(move |toolchain| Toolchain::from(self, &toolchain).unwrap()))
+    }
+
     pub fn verify_toolchain(&self, name: &str) -> Result<Toolchain<'_>> {
         let toolchain = self.get_toolchain(name, false)?;
         toolchain.verify()?;
@@ -787,18 +799,21 @@ impl Cfg {
     }
 
     pub fn list_toolchains(&self) -> Result<Vec<String>> {
+        let mut toolchains: Vec<_> = self.list_toolchains_iter()?.collect();
+        utils::toolchain_sort(&mut toolchains);
+        Ok(toolchains)
+    }
+
+    fn list_toolchains_iter(&self) -> Result<Box<dyn Iterator<Item = String>>> {
         if utils::is_directory(&self.toolchains_dir) {
-            let mut toolchains: Vec<_> = utils::read_dir("toolchains", &self.toolchains_dir)?
-                .filter_map(io::Result::ok)
-                .filter(|e| e.file_type().map(|f| !f.is_file()).unwrap_or(false))
-                .filter_map(|e| e.file_name().into_string().ok())
-                .collect();
-
-            utils::toolchain_sort(&mut toolchains);
-
-            Ok(toolchains)
+            Ok(Box::new(
+                utils::read_dir("toolchains", &self.toolchains_dir)?
+                    .filter_map(io::Result::ok)
+                    .filter(|e| e.file_type().map(|f| !f.is_file()).unwrap_or(false))
+                    .filter_map(|e| e.file_name().into_string().ok()),
+            ))
         } else {
-            Ok(Vec::new())
+            Ok(Box::new(iter::empty()))
         }
     }
 

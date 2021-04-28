@@ -7,6 +7,7 @@ use std::process::Command;
 use std::str::FromStr;
 
 use clap::{App, AppSettings, Arg, ArgGroup, ArgMatches, Shell, SubCommand};
+use glob::Pattern;
 
 use super::errors::*;
 use super::help::*;
@@ -1368,10 +1369,23 @@ fn toolchain_link(cfg: &Cfg, m: &ArgMatches<'_>) -> Result<utils::ExitCode> {
 }
 
 fn toolchain_remove(cfg: &mut Cfg, m: &ArgMatches<'_>) -> Result<utils::ExitCode> {
-    for toolchain in m.values_of("toolchain").unwrap() {
-        let toolchain = cfg.get_toolchain(toolchain, false)?;
-        toolchain.remove()?;
+    for pattern_str in m.values_of("toolchain").unwrap() {
+        let pattern = Pattern::new(&pattern_str)?;
+
+        let mut toolchains = cfg.get_toolchains_from_glob(pattern)?.peekable();
+
+        if toolchains.peek().is_some() {
+            // This pattern matched some toolchains, so remove each of the ones it matched.
+            for toolchain in toolchains {
+                toolchain.remove()?;
+            }
+        } else {
+            // It didn't match any toolchains, so treat it as a partial toolchain specifier.
+            let toolchain = cfg.get_toolchain(pattern_str, false)?;
+            toolchain.remove()?;
+        }
     }
+
     Ok(utils::ExitCode(0))
 }
 
