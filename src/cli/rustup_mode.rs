@@ -10,8 +10,7 @@ use clap::{App, AppSettings, Arg, ArgGroup, ArgMatches, Shell, SubCommand};
 
 use super::help::*;
 use super::self_update;
-use super::term2;
-use super::term2::Terminal;
+use super::term2::{self, Terminal};
 use super::topical_doc;
 use super::{
     common,
@@ -1196,7 +1195,7 @@ fn show(cfg: &Cfg) -> Result<utils::ExitCode> {
 
     fn print_header<E>(t: &mut term2::StdoutTerminal, s: &str) -> std::result::Result<(), E>
     where
-        E: From<term::Error> + From<std::io::Error>,
+        E: From<std::io::Error>,
     {
         t.attr(term2::Attr::Bold)?;
         writeln!(t, "{}", s)?;
