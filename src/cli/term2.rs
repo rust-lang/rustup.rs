@@ -7,6 +7,8 @@ use std::io::Write;
 
 use termcolor::{ColorChoice, ColorSpec, StandardStream, WriteColor};
 
+use crate::process;
+
 pub trait Terminal: io::Write {
     fn fg(&mut self, color: Color) -> io::Result<()>;
     fn bg(&mut self, color: Color) -> io::Result<()>;
@@ -53,17 +55,11 @@ pub enum Attr {
 
 use crate::currentprocess::filesource::Isatty;
 
-// Decorator to:
-// - Disable all terminal controls on non-tty's
-// - Swallow errors when we try to use features a terminal doesn't have
-//   such as setting colours when no TermInfo DB is present
+/// Disable all terminal controls on non-tty's
 pub(crate) struct AutomationFriendlyTerminal {
     stream: StandardStream,
     color: ColorSpec,
 }
-
-pub(crate) type StdoutTerminal = AutomationFriendlyTerminal;
-pub(crate) type StderrTerminal = AutomationFriendlyTerminal;
 
 impl Isatty for AutomationFriendlyTerminal {
     fn isatty(&self) -> bool {
@@ -121,26 +117,36 @@ impl io::Write for AutomationFriendlyTerminal {
     }
 }
 
-pub(crate) fn stdout() -> StdoutTerminal {
-    let choice = if crate::utils::tty::stdout_isatty() {
-        ColorChoice::Auto
-    } else {
-        ColorChoice::Never
-    };
-    AutomationFriendlyTerminal {
-        stream: termcolor::StandardStream::stdout(choice),
-        color: ColorSpec::new(),
+impl AutomationFriendlyTerminal {
+    pub(crate) fn stdout() -> AutomationFriendlyTerminal {
+        let choice = if crate::utils::tty::stdout_isatty() {
+            ColorChoice::Auto
+        } else {
+            ColorChoice::Never
+        };
+        AutomationFriendlyTerminal {
+            stream: termcolor::StandardStream::stdout(choice),
+            color: ColorSpec::new(),
+        }
+    }
+
+    pub(crate) fn stderr() -> AutomationFriendlyTerminal {
+        let choice = if crate::utils::tty::stderr_isatty() {
+            ColorChoice::Auto
+        } else {
+            ColorChoice::Never
+        };
+        AutomationFriendlyTerminal {
+            stream: termcolor::StandardStream::stderr(choice),
+            color: ColorSpec::new(),
+        }
     }
 }
 
-pub(crate) fn stderr() -> StderrTerminal {
-    let choice = if crate::utils::tty::stderr_isatty() {
-        ColorChoice::Auto
-    } else {
-        ColorChoice::Never
-    };
-    AutomationFriendlyTerminal {
-        stream: termcolor::StandardStream::stderr(choice),
-        color: ColorSpec::new(),
-    }
+pub(crate) fn stdout() -> Box<dyn Terminal> {
+    process().stdout()
+}
+
+pub(crate) fn stderr() -> Box<dyn Terminal> {
+    process().stderr()
 }
