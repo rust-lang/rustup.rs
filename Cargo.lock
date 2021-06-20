@@ -1727,6 +1727,7 @@ name = "rustup"
 version = "1.24.3"
 dependencies = [
  "anyhow",
+ "atty",
  "cc",
  "cfg-if 1.0.0",
  "chrono",
@@ -1758,7 +1759,7 @@ dependencies = [
  "strsim 0.10.0",
  "tar",
  "tempfile",
- "term",
+ "termcolor",
  "thiserror",
  "threadpool",
  "toml",
@@ -2098,13 +2099,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "term"
-version = "0.5.1"
+name = "termcolor"
+version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5e6b677dd1e8214ea1ef4297f85dbcbed8e8cdddb561040cc998ca2551c37561"
+checksum = "2dfed899f0eb03f32ee8c6a0aabdb8a7949659e3466561fc0adf54e26d88c5f4"
 dependencies = [
- "byteorder",
- "winapi",
+ "winapi-util",
 ]
 
 [[package]]

@@ -9,7 +9,6 @@ use std::{cmp, env, iter};
 use anyhow::{anyhow, Context, Result};
 use git_testament::{git_testament, render_testament};
 use lazy_static::lazy_static;
-use term2::Terminal;
 
 use super::self_update;
 use super::term2;

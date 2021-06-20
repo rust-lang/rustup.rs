@@ -11,7 +11,6 @@ use clap::{App, AppSettings, Arg, ArgGroup, ArgMatches, Shell, SubCommand};
 use super::help::*;
 use super::self_update;
 use super::term2;
-use super::term2::Terminal;
 use super::topical_doc;
 use super::{
     common,
@@ -75,7 +74,7 @@ pub fn main() -> Result<utils::ExitCode> {
             message,
             ..
         }) => {
-            writeln!(process().stdout().lock(), "{}", message)?;
+            writeln!(process().stdout(), "{}", message)?;
             return Ok(utils::ExitCode(0));
         }
         Err(clap::Error {
@@ -83,7 +82,7 @@ pub fn main() -> Result<utils::ExitCode> {
             message,
             ..
         }) => {
-            writeln!(process().stdout().lock(), "{}", message)?;
+            writeln!(process().stdout(), "{}", message)?;
             info!("This is the version for the rustup toolchain manager, not the rustc compiler.");
 
             fn rustc_version() -> std::result::Result<String, Box<dyn std::error::Error>> {
@@ -117,7 +116,7 @@ pub fn main() -> Result<utils::ExitCode> {
                 ]
                 .contains(kind)
                 {
-                    writeln!(process().stdout().lock(), "{}", message)?;
+                    writeln!(process().stdout(), "{}", message)?;
                     return Ok(utils::ExitCode(1));
                 }
             }
@@ -1120,7 +1119,7 @@ fn show(cfg: &Cfg) -> Result<utils::ExitCode> {
     if show_installed_toolchains {
         let mut t = term2::stdout();
         if show_headers {
-            print_header::<Error>(&mut t, "installed toolchains")?;
+            print_header::<Error>(&mut *t, "installed toolchains")?;
         }
         let default_name: Result<String> = cfg
             .get_default()?
@@ -1141,7 +1140,7 @@ fn show(cfg: &Cfg) -> Result<utils::ExitCode> {
     if show_active_targets {
         let mut t = term2::stdout();
         if show_headers {
-            print_header::<Error>(&mut t, "installed targets for active toolchain")?;
+            print_header::<Error>(&mut *t, "installed targets for active toolchain")?;
         }
         for at in active_targets {
             writeln!(
@@ -1161,7 +1160,7 @@ fn show(cfg: &Cfg) -> Result<utils::ExitCode> {
     if show_active_toolchain {
         let mut t = term2::stdout();
         if show_headers {
-            print_header::<Error>(&mut t, "active toolchain")?;
+            print_header::<Error>(&mut *t, "active toolchain")?;
         }
 
         match active_toolchain {
@@ -1194,9 +1193,9 @@ fn show(cfg: &Cfg) -> Result<utils::ExitCode> {
         }
     }
 
-    fn print_header<E>(t: &mut term2::StdoutTerminal, s: &str) -> std::result::Result<(), E>
+    fn print_header<E>(t: &mut dyn term2::Terminal, s: &str) -> std::result::Result<(), E>
     where
-        E: From<term::Error> + From<std::io::Error>,
+        E: From<std::io::Error>,
     {
         t.attr(term2::Attr::Bold)?;
         writeln!(t, "{}", s)?;
